@@ -49,3 +49,40 @@ DADA2pipe<-function(in.dir, ref, ID, truncLen=c(200,150), trimLeft = c(18,19), m
     ps
   }
 
+#' Run sequence alignment and build phylogenetic tree
+#'
+#' This function takes the sequence data from a phyloseq object, runs an alignment and builds a phylogenetic tree
+#' @param ps phyloseq object with sequences as taxon names
+#' @param processors The number of processors to use, or NULL to automatically detect and use all available processors.
+#' @keywords Ape DECIPHER phylogenetic tree
+#' @export
+#' @examples
+#' buildtree()
+buildtree<-function(ps, processors){
+  require(DECIPHER)
+  require(ape)
+  require(phyloseq)
+  require(Biostrings)
+
+  # extract sequences from phyloseq
+  seqs<-DNAStringSet(taxa_names(ps))
+
+  # align sequences
+  aligned <- AlignSeqs(seqs, processors = processors)
+
+  # determine genetic distance
+  dists <- DistanceMatrix(aligned,
+                          verbose=FALSE,
+                          correction="Jukes-Cantor")
+
+  # build a tree
+  tree <- IdClusters(dists,
+                     method="NJ", # Neighbor joining
+                     type="dendrogram",
+                     verbose=FALSE)
+  # plot the tree
+  plot(tree,
+       nodePar=list(lab.cex=0.5, pch=NA))
+  # Color known species based on their attribute
+  return(tree)
+}
